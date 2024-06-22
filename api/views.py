@@ -1,6 +1,5 @@
 from pprint import pprint
 from rest_framework.decorators import api_view
-
 from api.filters import ProductFilter
 from api.serializers import ProductSerializer, ReadProductSerializer,CategorySerializer,TagSerializer
 from market.models import Product,Category,Tag
@@ -125,7 +124,6 @@ def detail_category(request, id):
         return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
     
     serializer = CategorySerializer(category, context={'request': request})
-    # pprint(*serializer.data)
     return Response(serializer.data)
 
 
@@ -167,7 +165,8 @@ def detail_tag(request, id):
         if serializer.is_valid():
             tag = serializer.save()
             return Response(serializer.data)
-    return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
    
-
+    serializer = TagSerializer(tag, context={'request': request})
+    return Response(serializer.data)
 
