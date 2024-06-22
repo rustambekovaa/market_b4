@@ -1,19 +1,22 @@
-from pprint import pprint
 from rest_framework.decorators import api_view
 from api.filters import ProductFilter
-from api.serializers import ProductSerializer, ReadProductSerializer,CategorySerializer,TagSerializer
+from api.parsers import NestedMultiPartParser
+from api.serializers import ProductSerializer, ReadProductSerializer, CategorySerializer, TagSerializer, CreateProductSerializer
 from market.models import Product,Category,Tag
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.generics import get_object_or_404
 from django.db.models import Q
 from django.core.paginator import Paginator
+from rest_framework.parsers import JSONParser, MultiPartParser
+from rest_framework.decorators import parser_classes
 
 
 @api_view(['GET', 'POST'])
+@parser_classes([NestedMultiPartParser])
 def list_products(request):
     if request.method == 'POST':
-        serializer = ProductSerializer(data=request.data)
+        serializer = CreateProductSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             product = serializer.save()
             return Response(serializer.data, status.HTTP_201_CREATED)
