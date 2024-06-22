@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django_filters',
     'django_cleanup',
     'rest_framework',
+    'django_resized',
 
     # apps 
     'market'

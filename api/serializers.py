@@ -25,7 +25,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('id', 'username', 'email', 'first_name', 'last_name')
 
 
-class ProductSerializer(serializers.ModelSerializer):
+class ReadProductSerializer(serializers.ModelSerializer):
 
     user = UserSerializer()
     # category1 = CategorySerializer(source='category')
@@ -33,6 +33,13 @@ class ProductSerializer(serializers.ModelSerializer):
     category = CategorySerializer()
     tags = TagSerializer(many=True)
     image = serializers.ImageField()
+
+    class Meta:
+        model = Product
+        fields = '__all__'
+
+
+class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
