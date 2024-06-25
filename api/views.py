@@ -9,7 +9,7 @@ from rest_framework.generics import get_object_or_404
 from django.db.models import Q
 from django.core.paginator import Paginator
 from rest_framework.parsers import JSONParser, MultiPartParser
-from rest_framework.decorators import parser_classes
+from rest_framework.decorators import parser_classes, authentication_classes
 
 
 @api_view(['GET', 'POST'])
@@ -17,11 +17,15 @@ from rest_framework.decorators import parser_classes
 def list_products(request):
     if request.method == 'POST':
         serializer = CreateProductSerializer(data=request.data, context={'request': request})
-        if serializer.is_valid():
-            product = serializer.save()
-            return Response(serializer.data, status.HTTP_201_CREATED)
+        # if serializer.is_valid():
+        #     product = serializer.save()
+        #     return Response(serializer.data, status.HTTP_201_CREATED)
 
-        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+        # return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+    
+        serializer.is_valid(raise_exception=True)
+        product = serializer.save()
+        return Response(serializer.data, status.HTTP_201_CREATED)
 
     products = Product.objects.all()
 

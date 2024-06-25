@@ -1,5 +1,5 @@
 from . import views
-from django.urls import path
+from django.urls import path, include
 
 
 urlpatterns = [
@@ -9,4 +9,6 @@ urlpatterns = [
     path('category/<int:id>/', views.detail_category),
     path('tag/', views.create_tag),
     path('tag/<int:id>/', views.detail_tag),
+
+    path('auth/', include('api.auth.urls'))
 ]
