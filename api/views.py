@@ -9,12 +9,15 @@ from rest_framework.generics import get_object_or_404
 from django.db.models import Q
 from django.core.paginator import Paginator
 from rest_framework.parsers import JSONParser, MultiPartParser
-from rest_framework.decorators import parser_classes, authentication_classes
+from rest_framework.decorators import parser_classes, authentication_classes, permission_classes
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.authentication import TokenAuthentication
 
 
 @api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticatedOrReadOnly])
 @parser_classes([NestedMultiPartParser])
-def list_products(request):
+def list_create_products(request):
     if request.method == 'POST':
         serializer = CreateProductSerializer(data=request.data, context={'request': request})
         # if serializer.is_valid():
@@ -67,7 +70,7 @@ def list_products(request):
 
 
 @api_view(['GET', 'DELETE', 'PUT', 'PATCH'])
-def detail_products(request, id):
+def detail_update_delete_products(request, id):
     product = get_object_or_404(Product, id=id)
 
     if request.method == 'DELETE':
