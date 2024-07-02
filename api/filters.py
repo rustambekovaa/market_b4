@@ -1,13 +1,13 @@
-import django_filters
+from django_filters import rest_framework as filters
 from market.models import Product
 
 
-class ProductFilter(django_filters.FilterSet):
+class ProductFilter(filters.FilterSet):
 
-    from_price = django_filters.NumberFilter(field_name='price', lookup_expr='gte')
-    to_price = django_filters.NumberFilter(field_name='price', lookup_expr='lte')
+    from_price = filters.NumberFilter(field_name='price', lookup_expr='gte')
+    to_price = filters.NumberFilter(field_name='price', lookup_expr='lte')
 
-    # price = django_filters.NumericRangeFilter()
+    # price = filters.NumericRangeFilter()
 
     class Meta:
         model = Product

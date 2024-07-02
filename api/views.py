@@ -1,5 +1,6 @@
 from rest_framework.decorators import api_view
 from api.filters import ProductFilter
+from api.pagiantions import StadartPageNumberPagination
 from api.parsers import NestedMultiPartParser
 from api.serializers import ProductSerializer, ReadProductSerializer, CategorySerializer, TagSerializer, CreateProductSerializer
 from market.models import Product,Category,Tag
@@ -12,61 +13,48 @@ from rest_framework.parsers import JSONParser, MultiPartParser
 from rest_framework.decorators import parser_classes, authentication_classes, permission_classes
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.authentication import TokenAuthentication
+from rest_framework.generics import GenericAPIView
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import OrderingFilter, SearchFilter
 
 
-@api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticatedOrReadOnly])
-@parser_classes([NestedMultiPartParser])
-def list_create_products(request):
-    if request.method == 'POST':
-        serializer = CreateProductSerializer(data=request.data, context={'request': request})
-        # if serializer.is_valid():
-        #     product = serializer.save()
-        #     return Response(serializer.data, status.HTTP_201_CREATED)
 
-        # return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+class ListCreateApiView(GenericAPIView):
+
+    queryset = Product.objects.all()
+    serializer_classes = {
+       'get': ReadProductSerializer,
+       'post': CreateProductSerializer,
+    }
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    parser_classes = [NestedMultiPartParser]
+    pagination_class = StadartPageNumberPagination
+    filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
+    filterset_class = ProductFilter
+    ordering_fields = ['price', 'name']
+    search_fields = ['name', 'description', 'content']
     
+
+    def get(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        paginated_queryset = self.paginate_queryset(queryset)
+        if paginated_queryset is not None:
+            serializer = self.get_serializer(paginated_queryset, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         product = serializer.save()
         return Response(serializer.data, status.HTTP_201_CREATED)
 
-    products = Product.objects.all()
 
-    search = request.GET.get('search', None)
-
-    if search:
-        products = products.filter(
-            Q(name__icontains=search) | 
-            Q(description__icontains=search) |
-            Q(content__icontains=search)
-        )
-
-    ordering_list = ['price', 'name']
-
-    ordering = request.GET.get('ordering', None)
-
-    if ordering and ordering.split('-')[1] in ordering_list:
-        products = products.order_by(ordering)
-
-    filter_set = ProductFilter(data=request.GET, queryset=products)
-    products = filter_set.qs   
-
-    page = int(request.GET.get('page', 1))
-    page_size = int(request.GET.get('page_size', 24))
-   
-    qs_count = products.count()
-
-    pagin = Paginator(products, page_size)
-    products = pagin.get_page(page)
- 
-    serializer = ReadProductSerializer(products, many=True, context={'request': request})
-    data = {
-        'count': qs_count,
-        'page_count': pagin.num_pages,
-        'results': serializer.data
-    }
-
-    return Response(data)
+    def get_serializer_class(self):
+        return self.serializer_classes.get(self.request.method.lower())
 
 
 @api_view(['GET', 'DELETE', 'PUT', 'PATCH'])
@@ -112,6 +100,7 @@ def create_category(request):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     return Response({"detail": "Method not allowed."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
 
 @api_view(['GET', 'DELETE', 'PUT', 'PATCH'])
 def detail_category(request, id):
