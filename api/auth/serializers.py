@@ -1,11 +1,11 @@
-from django.contrib.auth.models import User
+from account.models import User
 from rest_framework import serializers
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
 
 
 class LoginSerializer(serializers.Serializer):
-    username = serializers.CharField()
+    phone = serializers.CharField()
     password = serializers.CharField()
 
 
@@ -13,7 +13,7 @@ class LoginSerializer(serializers.Serializer):
 #     first_name = serializers.CharField()
 #     last_name = serializers.CharField()
 #     username = serializers.CharField()
-#     password1 = serializers.CharField()
+#     password1 = serializers.CharField() 
 #     password2 = serializers.CharField()
 
 

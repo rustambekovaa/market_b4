@@ -26,26 +26,6 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('id', 'username', 'email', 'first_name', 'last_name')
 
 
-class ReadProductSerializer(serializers.ModelSerializer):
-
-    user = UserSerializer()
-    # category1 = CategorySerializer(source='category')
-    # category = serializers.CharField(source='category.name')
-    category = CategorySerializer()
-    tags = TagSerializer(many=True)
-    image = serializers.ImageField()
-
-    class Meta:
-        model = Product
-        fields = '__all__'
-
-
-class ProductSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Product
-        fields = '__all__'
-
     
 class AttributeForProductSerializer(serializers.ModelSerializer):
 
@@ -59,6 +39,46 @@ class ImagesForProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductImage
         exclude = ('product',)
+
+
+class DetailProductSerializer(serializers.ModelSerializer):
+
+    user = UserSerializer()
+    # category1 = CategorySerializer(source='category')
+    # category = serializers.CharField(source='category.name')
+    category = CategorySerializer()
+    tags = TagSerializer(many=True)
+    image = serializers.ImageField()
+    images = ImagesForProductSerializer(many=True)
+    attributes = AttributeForProductSerializer(many=True)
+
+    class Meta:
+        model = Product
+        fields = '__all__'
+        
+
+class ListProductSerializer(serializers.ModelSerializer):
+
+    user = UserSerializer()
+    # category1 = CategorySerializer(source='category')
+    # category = serializers.CharField(source='category.name')
+    category = CategorySerializer()
+    tags = TagSerializer(many=True)
+    image = serializers.ImageField()
+    images = ImagesForProductSerializer(many=True)
+
+    class Meta:
+        model = Product
+        exclude = ('content',)
+        
+
+class ProductSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Product
+        fields = '__all__'
+
+
 
 
 class CreateProductSerializer(serializers.ModelSerializer):

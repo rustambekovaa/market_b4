@@ -2,7 +2,8 @@ from rest_framework.decorators import api_view
 from api.filters import ProductFilter
 from api.pagiantions import StadartPageNumberPagination
 from api.parsers import NestedMultiPartParser
-from api.serializers import ProductSerializer, ReadProductSerializer, CategorySerializer, TagSerializer, CreateProductSerializer
+from api.permissions import IsOwnerOrReadOnly
+from api.serializers import ProductSerializer, ListProductSerializer, DetailProductSerializer, CategorySerializer, TagSerializer, CreateProductSerializer
 from market.models import Product,Category,Tag
 from rest_framework.response import Response
 from rest_framework import status
@@ -23,7 +24,7 @@ class ListCreateApiView(GenericAPIView):
 
     queryset = Product.objects.all()
     serializer_classes = {
-       'get': ReadProductSerializer,
+       'get': ListProductSerializer,
        'post': CreateProductSerializer,
     }
     permission_classes = [IsAuthenticatedOrReadOnly]
@@ -57,29 +58,46 @@ class ListCreateApiView(GenericAPIView):
         return self.serializer_classes.get(self.request.method.lower())
 
 
-@api_view(['GET', 'DELETE', 'PUT', 'PATCH'])
-def detail_update_delete_products(request, id):
-    product = get_object_or_404(Product, id=id)
+class DetailUpdateDeleteProductAPiView(GenericAPIView):
+    queryset = Product.objects.all()
+    serializer_classes = {
+        'get': DetailProductSerializer,
+        'put': ProductSerializer,
+        'patch': ProductSerializer,
+    }
+    lookup_field = 'id'
+    permission_classes = [IsOwnerOrReadOnly]
 
-    if request.method == 'DELETE':
+    def update(self, request, partial):
+        serializer = self.get_serializer(
+            instance=product, 
+            data=request.data,
+            partial=partial
+        )
+        serializer.is_valid(raise_exception=True)
+        product = serializer.save()
+        return Response(serializer.data)
+
+
+    def get(self, request, *args, **kwargs):
+        product = self.get_object() 
+        serializer = self.get_serializer(product)
+        return Response(serializer.data)
+
+    def patch(self, request, *args, **kwargs):
+        return self.update(request, True)
+
+    def put(self, request, *args, **kwargs):
+         return self.update(request, False)
+    
+    def delete(self, request, *args, **kwargs):
+        product = self.get_object() 
         product.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
     
-    if request.method in ['PATCH', 'PUT']:
-        serializer = ProductSerializer(
-            instance=product, 
-            data=request.data,
-            partial=request.method == 'PATCH'
-        )
-        if serializer.is_valid():
-            product = serializer.save()
-            return Response(serializer.data)
-        
-        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
-    
-    serializer = ProductSerializer(product, context={'request': request})
-    # pprint(*serializer.data)
-    return Response(serializer.data)
+    def get_serializer_class(self):
+        return self.serializer_classes.get(self.request.method.lower())
+
 
 
 @api_view(['GET', 'POST'])

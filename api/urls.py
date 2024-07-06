@@ -4,7 +4,7 @@ from rest_framework.authtoken.views import obtain_auth_token
 
 urlpatterns = [
     path('products/', views.ListCreateApiView.as_view()),
-    path('products/<int:id>/', views.detail_update_delete_products),
+    path('products/<int:id>/', views.DetailUpdateDeleteProductAPiView.as_view()),
     path('category/', views.create_category),
     path('category/<int:id>/', views.detail_category),
     path('tag/', views.create_tag),

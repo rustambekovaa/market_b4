@@ -21,10 +21,10 @@ def register_api_view(request):
 def login_api_view(request):
     serializer = LoginSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    username = serializer.validated_data.get('username')
+    phone = serializer.validated_data.get('phone')
     password = serializer.validated_data.get('password')
 
-    user = authenticate(username=username, password=password)
+    user = authenticate(phone=phone, password=password)
 
     if user:
         token, created = Token.objects.get_or_create(user=user) # (token, False)
