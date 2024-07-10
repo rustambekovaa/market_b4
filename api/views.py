@@ -1,8 +1,9 @@
 from rest_framework.decorators import api_view
 from api.filters import ProductFilter
+from api.mixins import PaginationBreakerMixin, SerializerByMethodMixin, UltraGenericAPIView
 from api.pagiantions import StadartPageNumberPagination
 from api.parsers import NestedMultiPartParser
-from api.permissions import IsOwnerOrReadOnly
+from api.permissions import IsAdminOrReadOnly, IsOwnerOrReadOnly
 from api.serializers import ProductSerializer, ListProductSerializer, DetailProductSerializer, CategorySerializer, TagSerializer, CreateProductSerializer
 from market.models import Product,Category,Tag
 from rest_framework.response import Response
@@ -20,7 +21,7 @@ from rest_framework.filters import OrderingFilter, SearchFilter
 
 
 
-class ListCreateApiView(GenericAPIView):
+class ListCreateProductApiView(UltraGenericAPIView):
 
     queryset = Product.objects.all()
     serializer_classes = {
@@ -54,11 +55,7 @@ class ListCreateApiView(GenericAPIView):
         return Response(serializer.data, status.HTTP_201_CREATED)
 
 
-    def get_serializer_class(self):
-        return self.serializer_classes.get(self.request.method.lower())
-
-
-class DetailUpdateDeleteProductAPiView(GenericAPIView):
+class DetailUpdateDeleteProductAPiView(GenericAPIView, SerializerByMethodMixin):
     queryset = Product.objects.all()
     serializer_classes = {
         'get': DetailProductSerializer,
@@ -94,54 +91,71 @@ class DetailUpdateDeleteProductAPiView(GenericAPIView):
         product = self.get_object() 
         product.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+   
+
+
+class ListCreateCategoryApiView(GenericAPIView, SerializerByMethodMixin, PaginationBreakerMixin):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer()
+    permission_classes = [IsAdminOrReadOnly]
+    pagination_class = StadartPageNumberPagination
+    filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
+    # filterset_fields = ['']
+    ordering_fields = ['name']
+    search_fields = ['name']
     
-    def get_serializer_class(self):
-        return self.serializer_classes.get(self.request.method.lower())
-
-
-
-@api_view(['GET', 'POST'])
-def create_category(request):
-    if request.method == 'POST':
+    
+    def get(self, request, *args, **kwargs):
+        categories = self.filter_queryset(self.get_queryset())
+        
+        paginated_qs = self.paginate_queryset(categories)
+        if paginated_qs is not None:
+            serializer = self.get_serializer(paginated_qs, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = self.get_serializer(categories, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)    
+    
+    def post(self, request, *args, **kwargs):
         data = request.data
-        serializer = CategorySerializer(data=data)
+        serializer = self.get_serializer(data=data)
         
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DetailUpdateDeleteCategoryApiView(GenericAPIView):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = [IsAdminOrReadOnly]
+    lookup_field = 'id'
+
+    def get(self, request, *args, **kwargs):
+        category = self.get_object()
+        serializer = self.get_serializer(instance=category)
+        return Response(serializer.data)
+
+    def patch(self, request, *args, **kwargs):
+        category = self.get_object()
+        serializer = self.get_serializer(instance=category, data=request.data, partial=True)
+        serializer.is_valid(raise_eception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def put(self, request, *args, **kwargs):
+        category = self.get_object()
+        serializer = self.get_serializer(instance=category, data=request.data, partial=False)
+        serializer.is_valid(raise_eception=True)
+        serializer.save()
+        return Response(serializer.data)
     
-    elif request.method == 'GET':
-        categories = Category.objects.all()
-        serializer = CategorySerializer(categories, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    
-    return Response({"detail": "Method not allowed."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-
-@api_view(['GET', 'DELETE', 'PUT', 'PATCH'])
-def detail_category(request, id):
-    category = get_object_or_404(Category, id=id)
-
-    if request.method == 'DELETE':
+    def delete(self, request, *args, **kwargs):
+        category = self.get_object()
         category.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
-    if request.method in ['PATCH', 'PUT']:
-        serializer = CategorySerializer(
-            instance=category, 
-            data=request.data,
-            partial=request.method == 'PATCH'
-        )
-        if serializer.is_valid():
-            category = serializer.save()
-            return Response(serializer.data)
-        
-        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
-    
-    serializer = CategorySerializer(category, context={'request': request})
-    return Response(serializer.data)
 
 
 
