@@ -2,6 +2,8 @@ from django.contrib import admin
 from django.utils.safestring import mark_safe
 from django import forms
 from market.models import Tag, Category, ProductImage, ProductAttribute, Product
+from django import forms
+from ckeditor_uploader.widgets import CKEditorUploadingWidget
 
 
 @admin.register(Tag)
@@ -30,6 +32,16 @@ class ProductAttributeStackedInline(admin.TabularInline):
     extra = 1
 
 
+class ProductAdminForm(forms.ModelForm):
+    
+    content = forms.CharField(widget=CKEditorUploadingWidget())
+    
+    class Meta:
+        model = Product
+        fields = '__all__'
+
+
+
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'price', 'category', 'is_published', 'get_image')
@@ -38,6 +50,7 @@ class ProductAdmin(admin.ModelAdmin):
     search_fields = ('name', 'description', 'content',)
     readonly_fields = ('created_at', 'updated_at', 'get_big_image',)
     inlines = [ProductAttributeStackedInline, ProductImageStackedInline]
+    form = ProductAdminForm
 
     @admin.display(description='Изображение')
     def get_image(self, item):

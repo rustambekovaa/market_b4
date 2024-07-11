@@ -15,7 +15,6 @@ class TimeStampAbstractModel(models.Model):
 
 
 class Category(TimeStampAbstractModel):
-
     class Meta:
         verbose_name = 'категория'
         verbose_name_plural = 'категории'
@@ -94,7 +93,6 @@ class ProductAttribute(TimeStampAbstractModel):
         verbose_name = 'атрибут товара'
         verbose_name_plural = 'атрибуты товаров'
         ordering = ('-created_at',)
-
     name = models.CharField('название', max_length=50)
     value = models.CharField('значение', max_length=50)
     product = models.ForeignKey('market.Product', models.CASCADE, related_name='attributes', verbose_name='товар')

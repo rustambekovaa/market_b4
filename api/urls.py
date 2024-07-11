@@ -7,7 +7,7 @@ urlpatterns = [
     path('products/<int:id>/', views.DetailUpdateDeleteProductAPiView.as_view()),
     path('category/', views.ListCreateCategoryApiView.as_view()),
     path('category/<int:id>/', views.DetailUpdateDeleteCategoryApiView.as_view()),
-    path('tag/', views.create_tag),
-    path('tag/<int:id>/', views.detail_tag),
+    path('tag/', views.ListCreateCategoryApiView.as_view()),
+    path('tag/<int:id>/', views.DetailUpdateDeleteTagApiView.as_view()),
     path('auth/', include('api.auth.urls'))
 ]
