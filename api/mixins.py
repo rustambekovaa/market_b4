@@ -15,6 +15,18 @@ class SerializerByMethodMixin:
         return super().get_serializer_class()
 
 
+class SerializerByActionMixin:
+    
+    serializer_classes = None
+    
+    def get_serializer_class(self):
+        if self.serializer_classes is not None:
+            if self.action == 'partial_update':
+                return self.serializer_classes.get('update')
+            return self.serializer_classes.get(self.action)
+        return super().get_serializer_class()
+
+
 class PaginationBreakerMixin:
     
     def paginate_queryset(self, queryset):
